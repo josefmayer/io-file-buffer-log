@@ -1,0 +1,58 @@
+
+***** System Information: ***** 
+os.arch: amd64
+os.name: Linux
+os.version: 4.4.0-1013-aws
+java.version: 1.8.0_121
+
+
+*** Files Testing: *** 
+file size in bytes
+read time in ns
+write time in ns
+
+** ByteBuffer ** 
+
+file name: text2_100kB
+size: 100151
+read:  1959132
+write: 146557
+
+file name: text1_10kB
+size: 10016
+read:  21330
+write: 23925
+
+file name: text3_1MB
+size: 1001523
+read:  777365
+write: 573480
+
+file name: text4_10MB
+size: 10015215
+read:  10201541
+write: 6114278
+
+** ByteBufferDirect ** 
+
+file name: text2_100kB
+size: 100151
+read:  24971
+write: 54142
+
+file name: text1_10kB
+size: 10016
+read:  8311
+write: 12257
+
+file name: text3_1MB
+size: 1001523
+read:  145000
+write: 425443
+
+file name: text4_10MB
+size: 10015215
+read:  1662578
+write: 4782721
+
+
