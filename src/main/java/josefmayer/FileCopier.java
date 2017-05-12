@@ -8,6 +8,9 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+import josefmayer.util.FileInfo;
+import josefmayer.util.IOInfo;
+import josefmayer.util.OSInfo;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -31,60 +34,50 @@ public class FileCopier {
 
         outboxDirectory.mkdir();
 
-        StringBuffer sb = new StringBuffer();
-        sb.append("\n");
-        sb.append(("***** System Information: ***** \n"));
-        sb.append("os.arch: " + System.getProperty("os.arch") + "\n");
-        sb.append("os.name: " + System.getProperty("os.name") + "\n");
-        sb.append("os.version: " + System.getProperty("os.version") + "\n");
-        sb.append("java.version: " + System.getProperty("java.version") + "\n\n\n");
-        sb.append("*** Files Testing: *** \n");
-
-        sb.append("file size in bytes\n");
-        sb.append("read time in ns\n");
-        sb.append("write time in ns\n");
+        OSInfo osInfo = new OSInfo(System.getProperty("os.arch"), System.getProperty("os.name"),
+                System.getProperty("os.version"), System.getProperty("java.version"));
+        IOInfo ioInfo = new IOInfo();
+        ioInfo.setOSInfo(osInfo);
 
         File[] files = inboxDirectory.listFiles();
 
-        sb.append("\n** ByteBuffer ** \n");
         for (File source : files) {
             if (source.isFile()) {
                 File dest = new File(
                         outboxDirectory.getPath()
                                 + File.separator
                                 + source.getName());
+                FileInfo fileInfo = new FileInfo();
+                copyFileByteBuf(source, dest, fileInfo);
 
-                copyFileByteBuf(source, dest, sb);
+                ioInfo.addFileInfo(fileInfo);
             }
         }
 
-        sb.append("\n** ByteBufferDirect ** \n");
         for (File source : files) {
             if (source.isFile()) {
                 File dest = new File(
                         outboxDirectory.getPath()
                                 + File.separator
                                 + source.getName());
-
-                copyFileByteBufDir(source, dest, sb);
+                FileInfo fileInfo = new FileInfo();
+                copyFileByteBufDir(source, dest, fileInfo);
+                ioInfo.addFileInfoDir(fileInfo);
             }
         }
 
-        sb.append("\n\n");
-        System.out.println(sb);
-        out.write(sb.toString().getBytes());
-
-        logger.info(sb.toString());
+        System.out.println(ioInfo);
+        out.write(ioInfo.toString().getBytes());
+        logger.info(ioInfo.toString());
 
     }
 
 
-    private void copyFileByteBuf(File source, File dest, StringBuffer sb) throws IOException {
+    private void copyFileByteBuf(File source, File dest, FileInfo fileInfo) throws IOException {
         long startTime, stopTime;
 
-        sb.append("\n");
-        sb.append("file name: " + source.getName() + "\n");
-        sb.append("size: " + source.length() + "\n");
+        fileInfo.setName(source.getName());
+        fileInfo.setFileSize(source.length());
 
         FileChannel fcin = new FileInputStream(source).getChannel();
         FileChannel fcout = new FileOutputStream(dest).getChannel();
@@ -95,14 +88,14 @@ public class FileCopier {
         int bytesCount = 0;
         while ((bytesCount = fcin.read(bytebuf)) > 0) {
             stopTime = System.nanoTime();
-            sb.append("read:  " + (stopTime - startTime) + "\n");
+            fileInfo.setReadTime(stopTime - startTime);
 
             bytebuf.flip();                 // flip the buffer which set the limit to current position, and position to 0.;
 
             startTime = System.nanoTime();
             fcout.write(bytebuf);           // Write data from ByteBuffer to file
             stopTime = System.nanoTime();
-            sb.append("write: " + (stopTime - startTime) + "\n");
+            fileInfo.setWriteTime(stopTime - startTime);
 
             bytebuf.clear();                // For the next read
 
@@ -111,12 +104,11 @@ public class FileCopier {
 
     }
 
-    private void copyFileByteBufDir(File source, File dest, StringBuffer sb) throws IOException {
+    private void copyFileByteBufDir(File source, File dest, FileInfo fileInfo) throws IOException {
         long startTime, stopTime;
 
-        sb.append("\n");
-        sb.append("file name: " + source.getName() + "\n");
-        sb.append("size: " + source.length() + "\n");
+        fileInfo.setName(source.getName());
+        fileInfo.setFileSize(source.length());
 
         FileChannel fcin = new FileInputStream(source).getChannel();
         FileChannel fcout = new FileOutputStream(dest).getChannel();
@@ -127,14 +119,14 @@ public class FileCopier {
         int bytesCount = 0;
         while ((bytesCount = fcin.read(bytebuf)) > 0) {
             stopTime = System.nanoTime();
-            sb.append("read:  " + (stopTime - startTime) + "\n");
+            fileInfo.setReadTime(stopTime - startTime);
 
             bytebuf.flip();                 // flip the buffer which set the limit to current position, and position to 0.;
 
             startTime = System.nanoTime();
             fcout.write(bytebuf);           // Write data from ByteBuffer to file
             stopTime = System.nanoTime();
-            sb.append("write: " + (stopTime - startTime) + "\n");
+            fileInfo.setWriteTime(stopTime - startTime);
 
             bytebuf.clear();                // For the next read
 
